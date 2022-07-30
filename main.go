@@ -11,6 +11,15 @@ import (
 	"github.com/jezek/xgb/xproto"
 )
 
+// func getWeather() string {
+// 	resp, err := http.Get("https://wttr.in?format=3")
+// 	if err != nil {
+// 		println(err.Error())
+// 		return ""
+// 	}
+// 
+// }
+
 func getCPU() (float32, float32) {
 	statFile, err := os.Open("/proc/stat")
 	if err != nil {
@@ -46,6 +55,21 @@ func getMem() float32 {
 	return 1.0-(free/total)
 }
 
+func getSwap() float32 {
+	memFile, err := os.Open("/proc/swaps")
+	if err != nil {
+		println(err)
+		return -1.0
+	}
+	defer memFile.Close()
+
+	var total, used float32
+	var pre string
+	fmt.Fscanf(memFile, "%s %s %s %s %s\n", &pre, &pre, &pre, &pre, &pre)
+	fmt.Fscanf(memFile, "%s %s %f %f %s\n", &pre, &pre, &total, &used, &pre)
+	return used/total
+}
+
 func main() {
 	x, err := xgb.NewConn() // connect to X
 	if err != nil {
@@ -59,7 +83,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	interval := 1*time.Second
-	format := "CPU %.2f%% | MEM %.2f%% | %s"
+	format := "CPU %.2f%% | MEM %.2f%% | SWAP %.2f%% | %s"
 	datef := time.RFC1123
 	// Parse CLA
 
@@ -72,13 +96,14 @@ func main() {
 		select {
 		case t := <-ticker.C:
 			mem := getMem()
+			swap := getSwap()
 
 			idl2, busy2 := getCPU()
 			total := idl + busy
 			total2 := idl2 + busy2
 			cpu := (busy2-busy)/(total2-total)
 
-			out := fmt.Sprintf(format, cpu*100, mem*100, t.Format(datef))
+			out := fmt.Sprintf(format, cpu*100, mem*100, swap*100, t.Format(datef))
 			xproto.ChangeProperty(
 				x,
 				xproto.PropModeReplace,
