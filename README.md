@@ -28,3 +28,13 @@ Update interval is 1 second, the result is like this:
 
 `CPU 15.67% | MEM 28.23% | SWAP 10.65% | Thu, 04 Mar 2022 18:23:14 -03`
 
+
+## Roadmap
+
+- [x] Clock
+- [x] CPU Usage
+- [x] MEM
+- [x] SWAP
+- [ ] Network
+- [ ] More than one swap file/partition
+- [ ] Wayland support (maybe another project)
