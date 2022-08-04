@@ -12,3 +12,9 @@ func TestGetSwap(t *testing.T) {
 	}
 }
 
+func Test_getNet(t *testing.T) {
+	netIn, netOut := getNet()
+	if netIn < 0 || netOut < 0 {
+		t.Error("negative numbers")
+	}
+}
