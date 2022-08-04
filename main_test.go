@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestGetSwap(t *testing.T) {
+func Test_getSwap(t *testing.T) {
 	swap := getSwap()
 	if math.IsNaN(float64(swap)) {
 		t.Error("swap is NaN")
