@@ -89,12 +89,15 @@ func getNet() (int, int) {
 
 	// Skip first two lines (table header)
 	fmt.Fscanln(netFile, &e, &e)
-	fmt.Fscan(netFile, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e)
-	_, err = fmt.Fscanln(netFile, &e, &rc, &z, &z, &z, &z, &z, &z, &z, &tx, &z, &z, &z, &z, &z, &z, &z)
+	fmt.Fscan(netFile,
+		&e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e, &e)
+	_, err = fmt.Fscanln(netFile,
+		&e, &rc, &z, &z, &z, &z, &z, &z, &z, &tx, &z, &z, &z, &z, &z, &z, &z)
 	for err == nil {
 		in += rc
 		out += tx
-		_, err = fmt.Fscanln(netFile, &e, &rc, &z, &z, &z, &z, &z, &z, &z, &tx, &z, &z, &z, &z, &z, &z, &z)
+		_, err = fmt.Fscanln(netFile, &e,
+			&rc, &z, &z, &z, &z, &z, &z, &z, &tx, &z, &z, &z, &z, &z, &z, &z)
 	}
 
 	return in, out
