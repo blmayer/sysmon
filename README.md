@@ -35,6 +35,7 @@ Update interval is 1 second, the result is like this:
 - [x] CPU Usage
 - [x] MEM
 - [x] SWAP
-- [ ] Network
+- [x] Network
 - [ ] More than one swap file/partition
+- [ ] Configuration
 - [ ] Wayland support (maybe another project)
