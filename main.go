@@ -13,7 +13,7 @@ import (
 
 const (
 	interval = 1 * time.Second
-	format   = "NET %d %d | CPU %.2f%% | MEM %.2f%% | SWAP %.2f%% | %s"
+	format   = "NET %d IN %d OUT | CPU %.2f%% | MEM %.2f%% | SWAP %.2f%% | %s"
 	datef    = time.RFC1123
 )
 
