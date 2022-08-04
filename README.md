@@ -38,6 +38,7 @@ Update interval is 1 second, components are:
 - [x] SWAP
 - [x] Network
 - [ ] More than one swap file/partition
+- [ ] Emoji?
 - [ ] Configuration
   - [ ] Use yaml file
   - [ ] Set update interval
