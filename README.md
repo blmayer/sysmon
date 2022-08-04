@@ -9,8 +9,8 @@ The defaults look like this:
 
 ## Installation
 
-Run `make`, the default installation directory is `~/local/bin` and it can be changed
-setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make`.
+Run `make install`, the default installation directory is `~/local/bin` and it can be changed
+setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make install`.
 
 
 ## Usage
