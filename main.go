@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"io"
 	"os"
 	"os/signal"
+	"strings"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -11,22 +15,25 @@ import (
 	"github.com/jezek/xgb/xproto"
 )
 
-const (
-	interval = 1 * time.Second
-	format   = "NET %d IN %d OUT | CPU %.2f%% | MEM %.2f%% | SWAP %.2f%% | %s"
-	datef    = time.RFC1123
-)
+func getWeather() string {
+	println("getting wttr")
+	resp, err := http.Get("https://wttr.in?format=3")
+	if err != nil {
+		println(err.Error())
+		return ""
+	}
+	defer resp.Body.Close()
 
-// func getWeather() string {
-// 	resp, err := http.Get("https://wttr.in?format=3")
-// 	if err != nil {
-// 		println(err.Error())
-// 		return ""
-// 	}
-//
-// }
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		println(err.Error())
+		return ""
+	}
 
-func getCPU() (float32, float32) {
+	return string(body)
+}
+
+func getCPU() (int, int) {
 	statFile, err := os.Open("/proc/stat")
 	if err != nil {
 		println(err.Error())
@@ -34,11 +41,11 @@ func getCPU() (float32, float32) {
 	}
 	defer statFile.Close()
 
-	var usr, ni, sys, idl, io, irq, soft, steal, guest, gni float32
+	var usr, ni, sys, idl, io, irq, soft, steal, guest, gni int
 	var pre string
 	fmt.Fscanf(
 		statFile,
-		"%s %f %f %f %f %f %f %f %f %f %f\n",
+		"%s %d %d %d %d %d %d %d %d %d %d\n",
 		&pre, &usr, &ni, &sys, &idl, &io, &irq, &soft, &steal, &guest, &gni,
 	)
 
@@ -59,6 +66,52 @@ func getMem() float32 {
 	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &free, &pre)
 
 	return 1.0 - (free / total)
+}
+
+func getBat() (int, bool) {
+	batFile, err := os.Open("/sys/class/power_supply/"+batName+"/capacity")
+	if err != nil {
+		println(err)
+		return -1.0, false
+	}
+	defer batFile.Close()
+
+	var cap int
+	fmt.Fscanf(batFile, "%d\n", &cap)
+
+	chargeFile, err := os.Open("/sys/class/power_supply/"+batName+"/status")
+	if err != nil {
+		println(err)
+		return -1.0, false
+	}
+	defer chargeFile.Close()
+	var status string
+	fmt.Fscanf(chargeFile, "%s\n", &status)
+
+	return cap, status == "Charging"
+}
+
+func getBrightness() int {
+	briFile, err := os.Open("/sys/class/backlight/"+displayName+"/brightness")
+	if err != nil {
+		println(err)
+		return -1.0
+	}
+	defer briFile.Close()
+
+	var bri int
+	fmt.Fscanf(briFile, "%d\n", &bri)
+
+	maxFile, err := os.Open("/sys/class/backlight/"+displayName+"/max_brightness")
+	if err != nil {
+		println(err)
+		return -1.0
+	}
+	defer maxFile.Close()
+	var max int
+	fmt.Fscanf(maxFile, "%d\n", &max)
+
+	return bri/max
 }
 
 func getSwap() float32 {
@@ -103,11 +156,134 @@ func getNet() (int, int) {
 	return in, out
 }
 
-// TODO: Change functions to return channels
+var (
+	batName string
+	displayName string
+)
+
+type values struct {
+	cpu float32
+	cpuidl int
+	cpubusy int
+	mem float32
+	bri int
+	swap float32
+	wtr string
+	bat int
+	charging string
+	netin int
+	netout int
+	netind int
+	netoutd int
+}
+
 func main() {
+	// dafault values
+	format := "NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME"
+	timeFormat := time.RFC3339
+	tickers := map[string]*time.Ticker{
+		"time": time.NewTicker(time.Second),
+		"cpu": time.NewTicker(2*time.Second),
+		"net": time.NewTicker(2*time.Second),
+		"mem": time.NewTicker(2*time.Second),
+		"swap": time.NewTicker(3*time.Second),
+		"bat": &time.Ticker{},
+		"bri": &time.Ticker{},
+		"wtr": &time.Ticker{},
+	}
+
+	// overrides
+	for i := 1; i < len(os.Args); i++ {
+		switch os.Args[i] {
+		case "-t", "--time":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["time"].Stop()
+			tickers["time"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-T", "--time-format":
+			i++
+			timeFormat = os.Args[i]
+		case "-b", "--battery":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["bat"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-N", "battery-name":
+			i++
+			batName = os.Args[i]
+		case "-c", "--cpu":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["cpu"].Stop()
+			tickers["cpu"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-n", "--net":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["net"].Stop()
+			tickers["net"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-m", "--mem":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["mem"].Stop()
+			tickers["mem"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-s", "--swap":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["swap"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-B", "--brightness":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["bri"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-d", "--display-name":
+			i++
+			displayName = os.Args[i]
+		case "-w", "--weather":
+			i++
+			val, err := strconv.Atoi(os.Args[i])
+			if err != nil {
+				println(err)
+				os.Exit(-1)
+			}
+			tickers["wtr"] = time.NewTicker(time.Duration(val)*time.Second)
+		case "-f", "--format":
+			i++
+			format = os.Args[i] 
+		default:
+			println("unreckognized argument")
+			os.Exit(-1)
+		}
+	}
+
 	x, err := xgb.NewConn() // connect to X
 	if err != nil {
-		println("Cannot connect to X:", err.Error())
+		println("cannot connect to X:", err.Error())
 		return
 	}
 	defer x.Close()
@@ -116,29 +292,23 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	var idl, busy float32
-	var netIn, netOut int
+	vals := values{}
 	for {
 		select {
-		case t := <-ticker.C:
-			mem := getMem()
-			swap := getSwap()
-			netIn2, netOut2 := getNet()
-
-			idl2, busy2 := getCPU()
-			total := idl + busy
-			total2 := idl2 + busy2
-			cpu := (busy2 - busy) / (total2 - total)
-
-			out := fmt.Sprintf(
-				format,
-				(netIn2-netIn)/1024, (netOut2-netOut)/1024,
-				cpu*100, mem*100, swap*100,
-				t.Format(datef),
+		case t := <-tickers["time"].C:
+			rep := strings.NewReplacer(
+				"$CPU",  fmt.Sprintf("%.2f", vals.cpu*100),
+				"$MEM",  fmt.Sprintf("%.2f", vals.mem*100),
+				"$SWAP", fmt.Sprintf("%.2f", vals.swap*100),
+				"$TIME", t.Format(timeFormat),
+				"$BRI", fmt.Sprintf("%d", vals.swap),
+				"$WTR", vals.wtr,
+				"$BAT", fmt.Sprintf("%d", vals.bat),
+				"$CHAR",vals.charging,
+				"$NIN", fmt.Sprintf("%d", vals.netind/1024),
+				"$NOUT",fmt.Sprintf("%d", vals.netoutd/1024),
 			)
+			out := rep.Replace(format)
 
 			xproto.ChangeProperty(
 				x,
@@ -150,8 +320,30 @@ func main() {
 				uint32(len(out)),
 				[]byte(out),
 			)
-			idl, busy = idl2, busy2
-			netIn, netOut = netIn2, netOut2
+		case <-tickers["bat"].C:
+			var charging bool
+			vals.bat, charging = getBat()
+			if charging {
+				vals.charging = "Charging"
+			}
+		case <-tickers["cpu"].C:
+			prevIdl, prevBusy := vals.cpuidl, vals.cpubusy
+			prevTotal := prevIdl + prevBusy
+			vals.cpuidl, vals.cpubusy = getCPU()
+			total := vals.cpuidl + vals.cpubusy
+			vals.cpu = float32(vals.cpubusy - prevBusy) / float32(total - prevTotal)
+		case <-tickers["mem"].C:
+			vals.mem = getMem()
+		case <-tickers["bri"].C:
+			vals.bri = getBrightness()
+		case <-tickers["swap"].C:
+			vals.swap = getSwap()
+		case <-tickers["wtr"].C:
+			vals.wtr = getWeather()
+		case <-tickers["net"].C:
+			vals.netind, vals.netoutd = -vals.netin, -vals.netout
+			vals.netin, vals.netout = getNet()
+			vals.netind, vals.netoutd = vals.netind + vals.netin, vals.netoutd + vals.netout
 		case <-sigs:
 			return
 		}
