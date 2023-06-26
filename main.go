@@ -15,8 +15,56 @@ import (
 	"github.com/jezek/xgb/xproto"
 )
 
+const help = `sysmon v1.1.0 A SYStem MONitor for your system bar, designed for DWM.
+
+Usage:
+  sysmon [OPTIONS]
+
+Available options:
+  -h
+  --help		show this help
+  -t
+  --time		set time refresh interval
+  -c
+  --cpu			set cpu refresh interval
+  -m
+  --mem			set memmory refresh interval
+  -s
+  --swap		set swap refresh interval
+  -n
+  --net			set network refresh interval
+  -B
+  --brightness		set brightness refresh interval, needs -d
+  -b
+  --battery		set battery refresh interval, needs -N
+  -N
+  --battery-name	set battery name to get information
+  -d
+  --display-name	set display name to get information
+  -f
+  --format		define output format, each module is defined
+  			using $CPU, $MEM, $SWAP, $BAT, $NET, $BRI, $TIME,
+			$WTR or $CHAR. Default:
+			"NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME"
+  -T
+  --time-format		set time format, default "2006-01-02 15:04:05", any
+  			format can be passed using go's time format string
+
+Examples:
+  sysmon
+All default values
+ 
+  sysmon -s 10
+Uses 10 seconds of interval for swap
+
+License:
+MIT Copyright (c) 2022-23 Brian Mayer
+
+Report bugs to: bleemayer@gmail.com
+Or open an issue at https://github.com/blmayer/sysmon
+`
+
 func getWeather() string {
-	println("getting wttr")
 	resp, err := http.Get("https://wttr.in?format=3")
 	if err != nil {
 		println(err.Error())
@@ -99,8 +147,8 @@ func getBrightness() int {
 	}
 	defer briFile.Close()
 
-	var bri int
-	fmt.Fscanf(briFile, "%d\n", &bri)
+	var bri float32
+	fmt.Fscanf(briFile, "%f\n", &bri)
 
 	maxFile, err := os.Open("/sys/class/backlight/"+displayName+"/max_brightness")
 	if err != nil {
@@ -108,10 +156,10 @@ func getBrightness() int {
 		return -1.0
 	}
 	defer maxFile.Close()
-	var max int
-	fmt.Fscanf(maxFile, "%d\n", &max)
+	var max float32
+	fmt.Fscanf(maxFile, "%f\n", &max)
 
-	return bri/max
+	return int(100*bri/max)
 }
 
 func getSwap() float32 {
@@ -180,7 +228,7 @@ type values struct {
 func main() {
 	// dafault values
 	format := "NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME"
-	timeFormat := time.RFC3339
+	timeFormat := time.DateTime
 	tickers := map[string]*time.Ticker{
 		"time": time.NewTicker(time.Second),
 		"cpu": time.NewTicker(2*time.Second),
@@ -275,6 +323,9 @@ func main() {
 		case "-f", "--format":
 			i++
 			format = os.Args[i] 
+		case "-h", "--help":
+			fmt.Println(help)
+			os.Exit(0)
 		default:
 			println("unreckognized argument")
 			os.Exit(-1)
@@ -301,7 +352,7 @@ func main() {
 				"$MEM",  fmt.Sprintf("%.2f", vals.mem*100),
 				"$SWAP", fmt.Sprintf("%.2f", vals.swap*100),
 				"$TIME", t.Format(timeFormat),
-				"$BRI", fmt.Sprintf("%d", vals.swap),
+				"$BRI", fmt.Sprintf("%d", vals.bri),
 				"$WTR", vals.wtr,
 				"$BAT", fmt.Sprintf("%d", vals.bat),
 				"$CHAR",vals.charging,

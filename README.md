@@ -4,7 +4,7 @@
 
 The defaults look like this:
 
-`NET 561 IN 27O OUT | CPU 15.67% | MEM 28.23% | SWAP 10.65% | Thu, 04 Mar 2022 18:23:14 -03`
+`NET I/O 561 27O | CPU 15.67% | MEM 28.23% | SWAP 10.65% | Thu, 04 Mar 2022 18:23:14 -03`
 
 
 ## Installation
@@ -16,34 +16,45 @@ setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make install`.
 ## Usage
 
 Add `sysmon &` to your *.xinitrc* file, default configuration
-is safe.
+is safe. The see all options that can be passed run `sysmon -h`.
 
 
 ### Defaults
 
-Update interval is 1 second, components are:
+The format is `NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME`
+and it gives you that example above.
 
-- Network in and out, in Kbps
-- CPU usage percentage
-- RAM usage percentage
-- SWAP usage in percent
-- Date
+Update interval is different for each component and can be changed by using
+command line arguments, intervals are:
+
+- Network in and out, in Kbps: 2 seconds
+- CPU usage percentage: 2 seconds
+- RAM usage percentage: 2 seconds
+- SWAP usage in percent: 3 seconds
+- Time: each second
+
+By default brightness, battery and weather are not displayed, to enable them
+use command line arguments. In order to display them you must pass the battery
+or the display name.
 
 
 ## Roadmap
 
 - [x] Clock
 - [x] CPU Usage
-- [x] MEM
-- [x] SWAP
+- [x] MEM %
+- [x] SWAP %
 - [x] Network
+- [x] Battery
+- [x] Brightness
+- [x] Weather (uses wttr.in)
 - [ ] More than one swap file/partition
 - [ ] Emoji?
 - [ ] Configuration
   - [ ] Use yaml file
-  - [ ] Set update interval
-  - [ ] Define line format
-  - [ ] Select what components to use
+  - [X] Set update interval
+  - [X] Define line format
+  - [X] Select what components to use
 - [ ] Wayland support (maybe another project)
 
 
@@ -58,3 +69,4 @@ License: MIT
 - [gocaudices](https://github.com/lordrusk/gocaudices)
 
 For a complete list visit [dwm's page](https://dwm.suckless.org/status_monitor/).
+
