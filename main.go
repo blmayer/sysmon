@@ -65,7 +65,7 @@ Or open an issue at https://github.com/blmayer/sysmon
 `
 
 func getWeather() string {
-	resp, err := http.Get("https://wttr.in?format=3")
+	resp, err := http.Get("https://wttr.in?format=%x+%w+%h+%t")
 	if err != nil {
 		println(err.Error())
 		return ""

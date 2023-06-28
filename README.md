@@ -9,7 +9,8 @@ The defaults look like this:
 
 ## Installation
 
-Run `make install`, the default installation directory is `~/local/bin` and it can be changed
+To have it installed in your GOPATH run `go install github.com/blmayer/sysmon@latest`, or
+run `make install`, the default installation directory is `~/local/bin` and it can be changed
 setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make install`.
 
 
