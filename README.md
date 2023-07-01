@@ -4,7 +4,7 @@
 
 The defaults look like this:
 
-`NET I/O 561 27O | CPU 15.67% | MEM 28.23% | SWAP 10.65% | Thu, 04 Mar 2022 18:23:14 -03`
+`NET I/O 561 27O | CPU 15.67% | MEM 28.23% | SWAP 10.65% | 2022-03-04 18:23:14`
 
 
 ## Installation
@@ -50,7 +50,7 @@ or the display name.
 - [x] Brightness
 - [x] Weather (uses wttr.in)
 - [ ] More than one swap file/partition
-- [ ] Emoji?
+- [x] Emoji
 - [ ] Configuration
   - [ ] Use yaml file
   - [X] Set update interval
@@ -70,4 +70,3 @@ License: MIT
 - [gocaudices](https://github.com/lordrusk/gocaudices)
 
 For a complete list visit [dwm's page](https://dwm.suckless.org/status_monitor/).
-
