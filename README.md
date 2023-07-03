@@ -6,6 +6,10 @@ The defaults look like this:
 
 `NET I/O 561 27O | CPU 15.67% | MEM 28.23% | SWAP 10.65% | 2022-03-04 18:23:14`
 
+Emoji can also be used by pasting it directly on the format string, e.g.:
+
+`$CPU% | $MEM% $SWAP% | $BRI% | $BAT%$CHAR | $TIME`
+
 
 ## Installation
 
