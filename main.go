@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -41,6 +41,8 @@ Available options:
   --battery-name	set battery name to get information
   -d
   --display-name	set display name to get information
+  -w
+  --weather		set weather refresh interval
   -f
   --format		define output format, each module is defined
   			using $CPU, $MEM, $SWAP, $BAT, $NET, $BRI, $TIME,
@@ -61,8 +63,7 @@ License:
 MIT Copyright (c) 2022-23 Brian Mayer
 
 Report bugs to: bleemayer@gmail.com
-Or open an issue at https://github.com/blmayer/sysmon
-`
+Or open an issue at https://github.com/blmayer/sysmon`
 
 func getWeather() string {
 	resp, err := http.Get("https://wttr.in?format=%x+%w+%h+%t")
@@ -117,7 +118,7 @@ func getMem() float32 {
 }
 
 func getBat() (int, bool) {
-	batFile, err := os.Open("/sys/class/power_supply/"+batName+"/capacity")
+	batFile, err := os.Open("/sys/class/power_supply/" + batName + "/capacity")
 	if err != nil {
 		println(err)
 		return -1.0, false
@@ -127,7 +128,7 @@ func getBat() (int, bool) {
 	var cap int
 	fmt.Fscanf(batFile, "%d\n", &cap)
 
-	chargeFile, err := os.Open("/sys/class/power_supply/"+batName+"/status")
+	chargeFile, err := os.Open("/sys/class/power_supply/" + batName + "/status")
 	if err != nil {
 		println(err)
 		return -1.0, false
@@ -140,7 +141,7 @@ func getBat() (int, bool) {
 }
 
 func getBrightness() int {
-	briFile, err := os.Open("/sys/class/backlight/"+displayName+"/brightness")
+	briFile, err := os.Open("/sys/class/backlight/" + displayName + "/brightness")
 	if err != nil {
 		println(err)
 		return -1.0
@@ -150,7 +151,7 @@ func getBrightness() int {
 	var bri float32
 	fmt.Fscanf(briFile, "%f\n", &bri)
 
-	maxFile, err := os.Open("/sys/class/backlight/"+displayName+"/max_brightness")
+	maxFile, err := os.Open("/sys/class/backlight/" + displayName + "/max_brightness")
 	if err != nil {
 		println(err)
 		return -1.0
@@ -159,7 +160,7 @@ func getBrightness() int {
 	var max float32
 	fmt.Fscanf(maxFile, "%f\n", &max)
 
-	return int(100*bri/max)
+	return int(100 * bri / max)
 }
 
 func getSwap() float32 {
@@ -205,24 +206,24 @@ func getNet() (int, int) {
 }
 
 var (
-	batName string
+	batName     string
 	displayName string
 )
 
 type values struct {
-	cpu float32
-	cpuidl int
-	cpubusy int
-	mem float32
-	bri int
-	swap float32
-	wtr string
-	bat int
+	cpu      float32
+	cpuidl   int
+	cpubusy  int
+	mem      float32
+	bri      int
+	swap     float32
+	wtr      string
+	bat      int
 	charging string
-	netin int
-	netout int
-	netind int
-	netoutd int
+	netin    int
+	netout   int
+	netind   int
+	netoutd  int
 }
 
 func main() {
@@ -231,13 +232,13 @@ func main() {
 	timeFormat := time.DateTime
 	tickers := map[string]*time.Ticker{
 		"time": time.NewTicker(time.Second),
-		"cpu": time.NewTicker(2*time.Second),
-		"net": time.NewTicker(2*time.Second),
-		"mem": time.NewTicker(2*time.Second),
-		"swap": time.NewTicker(3*time.Second),
-		"bat": &time.Ticker{},
-		"bri": &time.Ticker{},
-		"wtr": &time.Ticker{},
+		"cpu":  time.NewTicker(2 * time.Second),
+		"net":  time.NewTicker(2 * time.Second),
+		"mem":  time.NewTicker(2 * time.Second),
+		"swap": time.NewTicker(3 * time.Second),
+		"bat":  {},
+		"bri":  {},
+		"wtr":  {},
 	}
 
 	// overrides
@@ -251,7 +252,7 @@ func main() {
 				os.Exit(-1)
 			}
 			tickers["time"].Stop()
-			tickers["time"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["time"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-T", "--time-format":
 			i++
 			timeFormat = os.Args[i]
@@ -262,7 +263,7 @@ func main() {
 				println(err)
 				os.Exit(-1)
 			}
-			tickers["bat"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["bat"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-N", "battery-name":
 			i++
 			batName = os.Args[i]
@@ -274,7 +275,7 @@ func main() {
 				os.Exit(-1)
 			}
 			tickers["cpu"].Stop()
-			tickers["cpu"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["cpu"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-n", "--net":
 			i++
 			val, err := strconv.Atoi(os.Args[i])
@@ -283,7 +284,7 @@ func main() {
 				os.Exit(-1)
 			}
 			tickers["net"].Stop()
-			tickers["net"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["net"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-m", "--mem":
 			i++
 			val, err := strconv.Atoi(os.Args[i])
@@ -292,7 +293,7 @@ func main() {
 				os.Exit(-1)
 			}
 			tickers["mem"].Stop()
-			tickers["mem"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["mem"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-s", "--swap":
 			i++
 			val, err := strconv.Atoi(os.Args[i])
@@ -300,7 +301,7 @@ func main() {
 				println(err)
 				os.Exit(-1)
 			}
-			tickers["swap"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["swap"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-B", "--brightness":
 			i++
 			val, err := strconv.Atoi(os.Args[i])
@@ -308,7 +309,7 @@ func main() {
 				println(err)
 				os.Exit(-1)
 			}
-			tickers["bri"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["bri"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-d", "--display-name":
 			i++
 			displayName = os.Args[i]
@@ -319,10 +320,10 @@ func main() {
 				println(err)
 				os.Exit(-1)
 			}
-			tickers["wtr"] = time.NewTicker(time.Duration(val)*time.Second)
+			tickers["wtr"] = time.NewTicker(time.Duration(val) * time.Second)
 		case "-f", "--format":
 			i++
-			format = os.Args[i] 
+			format = os.Args[i]
 		case "-h", "--help":
 			fmt.Println(help)
 			os.Exit(0)
@@ -343,21 +344,22 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	// TODO: only refresh what is needed. i.e. is on the format string
 	vals := values{}
 	for {
 		select {
 		case t := <-tickers["time"].C:
 			rep := strings.NewReplacer(
-				"$CPU",  fmt.Sprintf("%.2f", vals.cpu*100),
-				"$MEM",  fmt.Sprintf("%.2f", vals.mem*100),
+				"$CPU", fmt.Sprintf("%.2f", vals.cpu*100),
+				"$MEM", fmt.Sprintf("%.2f", vals.mem*100),
 				"$SWAP", fmt.Sprintf("%.2f", vals.swap*100),
 				"$TIME", t.Format(timeFormat),
 				"$BRI", fmt.Sprintf("%d", vals.bri),
 				"$WTR", vals.wtr,
 				"$BAT", fmt.Sprintf("%d", vals.bat),
-				"$CHAR",vals.charging,
+				"$CHAR", vals.charging,
 				"$NIN", fmt.Sprintf("%d", vals.netind/1024),
-				"$NOUT",fmt.Sprintf("%d", vals.netoutd/1024),
+				"$NOUT", fmt.Sprintf("%d", vals.netoutd/1024),
 			)
 			out := rep.Replace(format)
 
@@ -382,7 +384,7 @@ func main() {
 			prevTotal := prevIdl + prevBusy
 			vals.cpuidl, vals.cpubusy = getCPU()
 			total := vals.cpuidl + vals.cpubusy
-			vals.cpu = float32(vals.cpubusy - prevBusy) / float32(total - prevTotal)
+			vals.cpu = float32(vals.cpubusy-prevBusy) / float32(total-prevTotal)
 		case <-tickers["mem"].C:
 			vals.mem = getMem()
 		case <-tickers["bri"].C:
@@ -394,7 +396,7 @@ func main() {
 		case <-tickers["net"].C:
 			vals.netind, vals.netoutd = -vals.netin, -vals.netout
 			vals.netin, vals.netout = getNet()
-			vals.netind, vals.netoutd = vals.netind + vals.netin, vals.netoutd + vals.netout
+			vals.netind, vals.netoutd = vals.netind+vals.netin, vals.netoutd+vals.netout
 		case <-sigs:
 			return
 		}
