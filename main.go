@@ -15,7 +15,7 @@ import (
 	"github.com/jezek/xgb/xproto"
 )
 
-const help = `sysmon v1.1.0 A SYStem MONitor for your system bar, designed for DWM.
+const help = `sysmon v1.1.1 A SYStem MONitor for your system bar, designed for DWM.
 
 Usage:
   sysmon [OPTIONS]
@@ -47,7 +47,7 @@ Available options:
   --format		define output format, each module is defined
   			using $CPU, $MEM, $SWAP, $BAT, $NET, $BRI, $TIME,
 			$WTR or $CHAR. Default:
-			"NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME"
+			'NET I/O $NIN $NOUT | CPU $CPU% | MEM $MEM% | SWAP $SWAP% | $TIME'
   -T
   --time-format		set time format, default "2006-01-02 15:04:05", any
   			format can be passed using go's time format string
@@ -60,7 +60,7 @@ All default values
 Uses 10 seconds of interval for swap
 
 License:
-MIT Copyright (c) 2022-23 Brian Mayer
+MIT Copyright (c) 2022-24 Brian Mayer
 
 Report bugs to: bleemayer@gmail.com
 Or open an issue at https://github.com/blmayer/sysmon`

@@ -11,10 +11,27 @@ Emoji can also be used by pasting it directly on the format string, e.g.:
 `$CPU% | $MEM% $SWAP% | $BRI% | $BAT%$CHAR | $TIME`
 
 
+## Dependencies
+
+- Go
+- Make
+
+
 ## Installation
 
-To have it installed in your GOPATH run `go install github.com/blmayer/sysmon@latest`, or
-run `make install`, the default installation directory is `~/local/bin` and it can be changed
+You can download and install the latest version directly using go with:
+
+```
+go install github.com/blmayer/sysmon@latest
+```
+
+Make sure your `GOPATH` is correctly set. Another option is to run
+
+```
+make install
+```
+
+The default installation directory is `~/local/bin` and it can be changed
 setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make install`.
 
 
@@ -22,6 +39,18 @@ setting the `PREFIX` variable, e.g.: `PREFIX=~/.bin make install`.
 
 Add `sysmon &` to your *.xinitrc* file, default configuration
 is safe. The see all options that can be passed run `sysmon -h`.
+
+If you are not using other status monitors you can try your configurations
+running `sysmon` in a terminal.
+
+
+### Changing the format
+
+To change the output of sysmon use the `-F` flag, and pass the format string
+as argument, use single quotes to prevent your shell messing up the string.
+For example, just memory, CPU and date:
+
+`sysmon -F 'MEM $MEM% | CPU $CPU% | $TIME'`
 
 
 ### Defaults
@@ -61,6 +90,11 @@ or the display name.
   - [X] Define line format
   - [X] Select what components to use
 - [ ] Wayland support (maybe another project)
+
+
+## Known users
+
+- Erik Dubois from [Arco Linux](https://arcolinux.info): [video](https://youtu.be/8SeCAXymXgw)
 
 
 ## Meta
