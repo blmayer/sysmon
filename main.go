@@ -109,12 +109,13 @@ func getMem() float32 {
 	}
 	defer memFile.Close()
 
-	var total, free float32
+	var total, avail float32
 	var pre string
 	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &total, &pre)
-	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &free, &pre)
+	fmt.Fscanf(memFile, "%s\n", &pre)
+	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &avail, &pre)
 
-	return 1.0 - (free / total)
+	return (total-avail) / total
 }
 
 func getBat() (int, bool) {
