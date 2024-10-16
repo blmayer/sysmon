@@ -112,7 +112,7 @@ func getMem() float32 {
 	var total, avail float32
 	var pre string
 	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &total, &pre)
-	fmt.Fscanf(memFile, "%s\n", &pre)
+	fmt.Fscanf(memFile, "%s %s %s\n", &pre, &pre, &pre)
 	fmt.Fscanf(memFile, "%s %f %s\n", &pre, &avail, &pre)
 
 	return (total-avail) / total
